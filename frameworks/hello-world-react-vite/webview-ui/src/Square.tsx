@@ -1,6 +1,12 @@
 import React from "react";
 
-export class Square extends React.Component {
+interface SquareProps {
+  value: number
+}
+
+interface SquareState {}
+
+export class Square extends React.Component<SquareProps, SquareState> {
     render() {
       return (
         <button className="square">
