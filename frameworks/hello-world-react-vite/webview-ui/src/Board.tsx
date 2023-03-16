@@ -3,7 +3,7 @@ import { Square } from "./Square";
 
 export class Board extends React.Component {
     renderSquare(i: number) {
-      return <Square value={i} />;
+      return <Square />;
     }
   
     render() {
