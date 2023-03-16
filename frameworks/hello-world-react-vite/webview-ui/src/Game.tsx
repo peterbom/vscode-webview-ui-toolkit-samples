@@ -46,9 +46,27 @@ export class Game extends React.Component<GameProps, GameState> {
     });
   }
 
+  jumpTo(turnIndex: number) {
+    this.setState({
+      history: this.state.history,
+      turnIndex,
+      winner: calculateWinner(this.state.history[turnIndex])
+    });
+  }
+
   render() {
-    const turnSquares = this.state.history[this.state.turnIndex];
+    const history = this.state.history;
+    const turnSquares = history[this.state.turnIndex];
     const status = this.state.winner ? `Winner: ${this.state.winner}` : `Next player: ${this.getNextPlayer()}`;
+
+    const moves = history.map((_squareValues, turnIndex) => {
+      const msg = turnIndex === 0 ? 'Restart game' : `Go to move ${turnIndex + 1}`;
+      return (
+        <li key={turnIndex}>
+          <button onClick={() => this.jumpTo(turnIndex)}>{msg}</button>
+        </li>
+      );
+    });
 
     return (
       <div className="game">
@@ -57,7 +75,7 @@ export class Game extends React.Component<GameProps, GameState> {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
