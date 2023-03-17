@@ -1,12 +1,24 @@
 import { vscode } from "./utilities/vscode";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
+import { useEffect, useState } from "react";
 
 function App() {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (message.command === "addOneResponse") {
+        setValue(message.value);
+      }
+    });
+  });
+
   function handleHowdyClick() {
     vscode.postMessage({
-      command: "hello",
-      text: "Hey there partner! 🤠",
+      command: "addOneRequest",
+      value,
     });
   }
 
@@ -14,6 +26,7 @@ function App() {
     <main>
       <h1>Hello World!</h1>
       <VSCodeButton onClick={handleHowdyClick}>Howdy!</VSCodeButton>
+      <p>{value}</p>
     </main>
   );
 }

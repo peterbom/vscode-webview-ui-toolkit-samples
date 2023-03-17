@@ -1,5 +1,3 @@
-import React from "react";
-
 interface SquareProps {
   value: string | null
   onClick: () => void
