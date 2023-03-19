@@ -1,9 +1,9 @@
-import { vscode } from "./utilities/vscode";
+import { vscode } from "../utilities/vscode";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import "./App.css";
+import "./HelloWorld.css";
 import { useEffect, useState } from "react";
 
-function App() {
+export function HelloWorld() {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
@@ -30,5 +30,3 @@ function App() {
     </main>
   );
 }
-
-export default App;

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
-import App from "./App";
-import { Game } from "./Game";
+import { HelloWorld } from "./HelloWorld/HelloWorld";
+import { Game } from "./Game/Game";
+import { ContentSelector } from "./ContentSelector";
 
 const contentMap: { [contentId: string]: () => JSX.Element } = {
-  app: () => <App />,
+  hello: () => <HelloWorld />,
   game: () => <Game />
 };
 
@@ -20,28 +21,8 @@ ReactDOM.render(
 
 function getContent(contentId?: string): JSX.Element {
   if (!contentId || !(contentId in contentMap)) {
-    return <ContentSelector />
+    return <ContentSelector contentMap={contentMap} />
   }
 
   return contentMap[contentId]();
-}
-
-function ContentSelector() {
-  const [selected, setSelected] = useState("");
-
-  if (selected) {
-    return contentMap[selected]();
-  }
-
-  return (
-    <ul>
-    {
-      Object.keys(contentMap).map(id => (
-        <li key={id}>
-          <button onClick={() => setSelected(id)}>{id}</button>
-        </li>
-      ))
-    }
-    </ul>
-  );
 }

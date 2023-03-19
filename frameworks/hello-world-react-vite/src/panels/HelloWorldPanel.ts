@@ -8,7 +8,7 @@ export class HelloWorldPanel extends BasePanel {
       {
         viewType: "showHelloWorld",
         title: "Hello World",
-        contentId: "app"
+        contentId: "hello"
       },
       {
         addOneRequest: function(webview: Webview, message: any) {
