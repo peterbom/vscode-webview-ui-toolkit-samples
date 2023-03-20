@@ -1,3 +1,5 @@
+import styles from './Square.module.css';
+
 interface SquareProps {
   value: string | null
   onClick: () => void
@@ -5,7 +7,7 @@ interface SquareProps {
 
 export function Square(props: SquareProps) {
   return (
-    <button className="square" onClick={props.onClick}>
+    <button className={styles.square} onClick={props.onClick}>
       {props.value}
     </button>
   );

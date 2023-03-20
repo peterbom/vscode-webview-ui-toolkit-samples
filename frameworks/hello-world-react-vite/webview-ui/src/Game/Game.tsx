@@ -1,6 +1,6 @@
 import React from "react";
 import { Board, SquareValues } from "./Board";
-import './Game.css';
+import styles from './Game.module.css';
 
 interface GameProps {}
 
@@ -69,13 +69,13 @@ export class Game extends React.Component<GameProps, GameState> {
     });
 
     return (
-      <div className="game">
-        <div className="game-board">
+      <div className={styles.game}>
+        <div className={styles.gameBoard}>
           <Board squares={turnSquares} onSquareClick={i => this.handleSquareClick(i)} />
         </div>
-        <div className="game-info">
+        <div className={styles.gameInfo}>
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <ol className={styles.list}>{moves}</ol>
         </div>
       </div>
     );

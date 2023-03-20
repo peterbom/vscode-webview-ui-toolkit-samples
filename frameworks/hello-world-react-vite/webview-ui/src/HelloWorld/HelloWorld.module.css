@@ -1,4 +1,4 @@
-main {
+.main {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -6,6 +6,6 @@ main {
   height: 100%;
 }
 
-main > * {
+.main > * {
   margin: 1rem 0;
 }

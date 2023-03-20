@@ -1,7 +1,7 @@
 import { MessageSubscriber, vscode } from "../utilities/vscode";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import "./HelloWorld.css";
 import { useEffect, useState } from "react";
+import styles from "./HelloWorld.module.css";
 
 export function HelloWorld() {
   const [value, setValue] = useState(0);
@@ -23,7 +23,7 @@ export function HelloWorld() {
   }
 
   return (
-    <main>
+    <main className={styles.main}>
       <h1>Hello World!</h1>
       <VSCodeButton onClick={handleHowdyClick}>Howdy!</VSCodeButton>
       <p>{value}</p>

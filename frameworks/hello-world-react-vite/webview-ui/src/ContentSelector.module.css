@@ -8,14 +8,14 @@
   overflow-x: hidden;
 }
 
-.content-link {
+.contentLink {
   padding: 0.1rem;
   text-decoration: none;
   font-size: 1.2rem;
   display: block;
 }
 
-.content-link:hover {
+.contentLink:hover {
   color: #222
 }
 
