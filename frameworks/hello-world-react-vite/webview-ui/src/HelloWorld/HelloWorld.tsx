@@ -1,4 +1,4 @@
-import { vscode } from "../utilities/vscode";
+import { MessageSubscriber, vscode } from "../utilities/vscode";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import "./HelloWorld.css";
 import { useEffect, useState } from "react";
@@ -30,3 +30,12 @@ export function HelloWorld() {
     </main>
   );
 }
+
+export const fakeSubscriber: MessageSubscriber = {
+  addOneRequest: message => {
+    window.postMessage({
+      command: "addOneResponse",
+      value: message.value + 1
+    });
+  }
+};

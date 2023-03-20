@@ -1,5 +1,12 @@
 import type { WebviewApi } from "vscode-webview";
 
+const messageTarget = new EventTarget();
+let currentListener: EventListener;
+
+export type MessageSubscriber = {
+  [command: string]: (message: any) => void
+}
+
 /**
  * A utility wrapper around the acquireVsCodeApi() function, which enables
  * message passing and state management between the webview and extension
@@ -32,7 +39,7 @@ class VSCodeAPIWrapper {
     if (this.vsCodeApi) {
       this.vsCodeApi.postMessage(message);
     } else {
-      console.log(message);
+      messageTarget.dispatchEvent(new MessageEvent('vscode-message', {data: message}));
     }
   }
 
@@ -72,6 +79,28 @@ class VSCodeAPIWrapper {
       return newState;
     }
   }
+}
+
+export function subscribeToPostMessages(subscriber: MessageSubscriber) {
+  if (currentListener) {
+    messageTarget.removeEventListener('vscode-message', currentListener);
+  }
+
+  currentListener = (message: any) => {
+    const command = message.data.command;
+    if (!command) {
+      throw new Error('Expected message to have a "command" property');
+    }
+
+    const handler = subscriber[command];
+    if (!handler) {
+      throw new Error(`No handler found for command ${command}`);
+    }
+
+    handler(message.data);
+  };
+
+  messageTarget.addEventListener('vscode-message', currentListener);
 }
 
 // Exports class singleton to prevent multiple invocations of acquireVsCodeApi.
