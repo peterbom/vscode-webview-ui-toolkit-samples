@@ -1,40 +1,68 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom";
-import { HelloWorld, fakeSubscriber as fakeHelloWorldSubscriber } from "./HelloWorld/HelloWorld";
-import { Game } from "./Game/Game";
+import { HelloWorld, getHelloWorldScenarios } from "./HelloWorld/HelloWorld";
+import { GameContract, HelloWorldContract, PeriscopeContract } from "../../src/contract/webviewContracts";
+import { Game, getGameScenarios } from "./Game/Game";
 import { ContentSelector } from "./ContentSelector";
-import { MessageSubscriber, subscribeToPostMessages } from "./utilities/vscode";
+import { Periscope, getPeriscopeScenarios } from "./Periscope/Periscope";
 
-const contentMap: { [contentId: string]: () => JSX.Element } = {
-  hello: () => <HelloWorld />,
-  game: () => <Game />
-};
-
-const subscriberMap: { [contentId: string]: MessageSubscriber } = {
-  hello: fakeHelloWorldSubscriber
-};
+// There are two modes of launching this application:
+// 1. Via the VS Code extension inside a Webview.
+// 2. In a browser using a local web server.
+//
+// We cater for these differences here. These are:
+// - Content selection:
+//   1. the VS Code extension will specify the content using a 'data-contentid' attribute on the root element.
+//   2. the browser will display a list of manual test scenarios for the user to choose from.
+// - Initial state:
+//   1. the VS Code extension will specify initial state as a JSON-serialized value in the 'data-initialstate'
+//      attribute on the root element.
+//   2. the browser will use test data provided by each of the components.
+// - Message passing:
+//   1. the VS code extension will handle outgoing messages from React components (sent using `vscode.postMessage`)
+//      and its responses (using `Webview.postMessage`) will be picked up by adding a `message` listener to the
+//      `window` object.
+//   2. the browser will use a test subscriber that intercepts messages from React components and responds by
+//      dispatching `message` events to the `window` object so that application components can listen to them
+//      in the same way.
 
 const rootElem = document.getElementById("root");
-const content = getContent(rootElem?.dataset.content);
+
+function getVsCodeContent(): JSX.Element | null {
+  const vscodeContentId = rootElem?.dataset.contentid;
+  if (!vscodeContentId) {
+    return null;
+  }
+
+  const vsCodeInitialState = JSON.parse(rootElem?.dataset.initialstate || "{}");
+  switch (vscodeContentId) {
+    case HelloWorldContract.viewInfo.contentId: return <HelloWorld {...vsCodeInitialState} />
+    case GameContract.viewInfo.contentId: return <Game />
+    case PeriscopeContract.viewInfo.contentId: return <Periscope {...vsCodeInitialState} />
+    default: throw new Error(`Unexpected content ID ${vscodeContentId}`);
+  }
+}
+
+const testScenarios = [
+  ...getHelloWorldScenarios(),
+  ...getGameScenarios(),
+  ...getPeriscopeScenarios()
+];
+
+const testScenarioNames = testScenarios.map(f => f.name);
 
 ReactDOM.render(
   <StrictMode>
-    {content}
+    {getVsCodeContent() || <ContentSelector testScenarioNames={testScenarioNames} onTestScenarioChange={handleTestScenarioChange} />}
   </StrictMode>,
   document.getElementById("root")
 );
 
-function getContent(contentId?: string): JSX.Element {
-  if (!contentId || !(contentId in contentMap)) {
-    return <ContentSelector contentMap={contentMap} onContentChange={updateSubscriber} />
+function handleTestScenarioChange(name: string): JSX.Element {
+  const scenario = testScenarios.find(f => f.name === name);
+  if (!scenario) {
+    throw new Error(`Test scenario '${name}' not found.`);
   }
 
-  return contentMap[contentId]();
-}
-
-function updateSubscriber(contentId: string) {
-  const subscriber = subscriberMap[contentId];
-  if (subscriber) {
-    subscribeToPostMessages(subscriber);
-  }
+  return scenario.factory();
 }

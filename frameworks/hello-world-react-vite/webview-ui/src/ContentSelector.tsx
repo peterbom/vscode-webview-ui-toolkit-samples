@@ -2,35 +2,37 @@ import { useState } from "react";
 import styles from "./ContentSelector.module.css"
 
 export interface ContentSelectorProps {
-  contentMap: { [contentId: string]: () => JSX.Element },
-  onContentChange: (contentId: string) => void
+  testScenarioNames: string[]
+  onTestScenarioChange: (contentName: string) => JSX.Element
 }
 
 export function ContentSelector(props: ContentSelectorProps) {
-  const [selected, setSelected] = useState("");
+  const [content, setContent] = useState<JSX.Element | null>(null);
+  const [selected, setSelected] = useState<string>("");
 
-  function handleLinkClick(contentId: string) {
-    setSelected(contentId);
-    props.onContentChange(contentId);
+  function handleTestScenarioChange(name: string) {
+    setSelected(name);
+    const newContent = props.onTestScenarioChange(name);
+    setContent(newContent);
+  }
+
+  function getLinkClassNames(name: string): string {
+    return [styles.contentLink, selected === name && styles.selected].filter(s => s).join(' ');
   }
 
   return (
     <>
       <ul className={styles.sidebar}>
       {
-        Object.keys(props.contentMap).map(id => (
-          <li key={id}>
-            <a href="#" className={styles.contentLink} onClick={() => handleLinkClick(id)}>{id}</a>
+        props.testScenarioNames.map(name => (
+          <li key={name}>
+            <a href="#" className={getLinkClassNames(name)} onClick={() => handleTestScenarioChange(name)}>{name}</a>
           </li>
         ))
       }
       </ul>
       {
-        selected && (
-          <div className={styles.main}>
-            {props.contentMap[selected]()}
-          </div>
-        )
+        content && <div className={styles.main}>{content}</div>
       }
     </>
   );

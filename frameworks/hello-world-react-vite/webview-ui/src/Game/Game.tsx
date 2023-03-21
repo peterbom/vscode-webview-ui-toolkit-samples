@@ -1,4 +1,6 @@
 import React from "react";
+import { GameContract } from "../../../src/contract/webviewContracts";
+import { Scenario } from "../utilities/manualTest";
 import { Board, SquareValues } from "./Board";
 import styles from './Game.module.css';
 
@@ -100,4 +102,10 @@ function calculateWinner(squares: SquareValues): string | null {
   });
 
   return line && squares[line[0]] || null;
+}
+
+export function getGameScenarios() {
+  return [
+    Scenario.create(GameContract.viewInfo.title, () => <Game />)
+  ];
 }

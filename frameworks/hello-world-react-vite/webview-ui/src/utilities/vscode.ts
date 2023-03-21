@@ -1,107 +1,83 @@
 import type { WebviewApi } from "vscode-webview";
+import { MessageContext, MessageSubscriber } from "../../../src/contract/messaging";
 
-const messageTarget = new EventTarget();
-let currentListener: EventListener;
+const vsCodeApi: WebviewApi<unknown> | undefined = (typeof acquireVsCodeApi === "function") ? acquireVsCodeApi() : undefined;
 
-export type MessageSubscriber = {
-  [command: string]: (message: any) => void
+interface NamedEventTarget {
+  target: EventTarget
+  name: string
 }
 
-/**
- * A utility wrapper around the acquireVsCodeApi() function, which enables
- * message passing and state management between the webview and extension
- * contexts.
- *
- * This utility also enables webview code to be run in a web browser-based
- * dev server by using native web browser features that mock the functionality
- * enabled by acquireVsCodeApi.
- */
-class VSCodeAPIWrapper {
-  private readonly vsCodeApi: WebviewApi<unknown> | undefined;
+interface EventListenerWithCommands {
+  listener: EventListener
+  commands: string[]
+}
 
-  constructor() {
-    // Check if the acquireVsCodeApi function exists in the current development
-    // context (i.e. VS Code development window or web browser)
-    if (typeof acquireVsCodeApi === "function") {
-      this.vsCodeApi = acquireVsCodeApi();
+// There is only one EventTarget for intercepting vscode messages, and one for responding to them.
+const windowEventTarget: NamedEventTarget = { target: window, name: "Webview window" };
+const interceptorEventTarget: NamedEventTarget = { target: new EventTarget(), name: "VSCode message interceptor" };
+
+let windowEventListener:  EventListenerWithCommands | null = null;
+let interceptorEventListener: EventListenerWithCommands | null = null;
+
+class WebviewMessageContext<TPostMsg, TListenMsg> implements MessageContext<TPostMsg, TListenMsg> {
+  postMessage(message: TPostMsg) {
+    if (vsCodeApi) {
+      vsCodeApi.postMessage(message);
+    } else {
+      console.log(`Dispatching ${JSON.stringify(message)} to '${interceptorEventTarget.name}'`);
+      interceptorEventTarget.target.dispatchEvent(new MessageEvent('vscode-message', {data: message}));
     }
   }
 
-  /**
-   * Post a message (i.e. send arbitrary data) to the owner of the webview.
-   *
-   * @remarks When running webview code inside a web browser, postMessage will instead
-   * log the given message to the console.
-   *
-   * @param message Abitrary data (must be JSON serializable) to send to the extension context.
-   */
-  public postMessage(message: unknown) {
-    if (this.vsCodeApi) {
-      this.vsCodeApi.postMessage(message);
-    } else {
-      messageTarget.dispatchEvent(new MessageEvent('vscode-message', {data: message}));
-    }
-  }
-
-  /**
-   * Get the persistent state stored for this webview.
-   *
-   * @remarks When running webview source code inside a web browser, getState will retrieve state
-   * from local storage (https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
-   *
-   * @return The current state or `undefined` if no state has been set.
-   */
-  public getState(): unknown | undefined {
-    if (this.vsCodeApi) {
-      return this.vsCodeApi.getState();
-    } else {
-      const state = localStorage.getItem("vscodeState");
-      return state ? JSON.parse(state) : undefined;
-    }
-  }
-
-  /**
-   * Set the persistent state stored for this webview.
-   *
-   * @remarks When running webview source code inside a web browser, setState will set the given
-   * state using local storage (https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
-   *
-   * @param newState New persisted state. This must be a JSON serializable object. Can be retrieved
-   * using {@link getState}.
-   *
-   * @return The new state.
-   */
-  public setState<T extends unknown | undefined>(newState: T): T {
-    if (this.vsCodeApi) {
-      return this.vsCodeApi.setState(newState);
-    } else {
-      localStorage.setItem("vscodeState", JSON.stringify(newState));
-      return newState;
-    }
+  subscribeToMessages(subscriber: MessageSubscriber<TListenMsg>) {
+    windowEventListener = subscribeToMessages(windowEventTarget, windowEventListener, subscriber, 'message');
   }
 }
 
-export function subscribeToPostMessages(subscriber: MessageSubscriber) {
-  if (currentListener) {
-    messageTarget.removeEventListener('vscode-message', currentListener);
+export function getWebviewMessageContext<TPostMsg, TListenMsg>(): MessageContext<TPostMsg, TListenMsg> {
+  return new WebviewMessageContext<TPostMsg, TListenMsg>();
+}
+
+class VscodeInterceptorMessageContext<TPostMsg, TListenMsg> implements MessageContext<TPostMsg, TListenMsg> {
+  postMessage(message: TPostMsg) {
+    console.log(`Dispatching ${JSON.stringify(message)} to '${windowEventTarget.name}'`);
+    windowEventTarget.target.dispatchEvent(new MessageEvent('message', {data: message}));
   }
 
-  currentListener = (message: any) => {
+  subscribeToMessages(subscriber: MessageSubscriber<TListenMsg>) {
+    interceptorEventListener = subscribeToMessages(interceptorEventTarget, interceptorEventListener, subscriber, 'vscode-message');
+  }
+}
+
+export function getVscodeInterceptorMessageContext<TPostMsg, TListenMsg>(): MessageContext<TPostMsg, TListenMsg> {
+  return new VscodeInterceptorMessageContext<TPostMsg, TListenMsg>();
+}
+
+function subscribeToMessages<TMessage>(
+  eventTarget: NamedEventTarget,
+  currentEventListener: EventListenerWithCommands | null,
+  subscriber: MessageSubscriber<TMessage>,
+  eventType: string
+): EventListenerWithCommands {
+  if (currentEventListener) {
+    console.log(`Removing listeners for [${currentEventListener.commands.join(',')} from '${eventTarget.name}']`);
+    eventTarget.target.removeEventListener(eventType, currentEventListener.listener);
+  }
+
+  const commands = subscriber.getCommands();
+  const newListener = (message: any) => {
     const command = message.data.command;
     if (!command) {
-      throw new Error('Expected message to have a "command" property');
+      return;
     }
 
-    const handler = subscriber[command];
-    if (!handler) {
-      throw new Error(`No handler found for command ${command}`);
-    }
-
+    console.log(`'${eventTarget.name}' is handling command '${command}' (able to handle [${commands.join(',')}])`);
+    const handler = subscriber.getHandler(command);
     handler(message.data);
   };
 
-  messageTarget.addEventListener('vscode-message', currentListener);
+  console.log(`Adding listeners for [${commands.join(',')}] to '${eventTarget.name}'`);
+  eventTarget.target.addEventListener(eventType, newListener);
+  return { listener: newListener, commands };
 }
-
-// Exports class singleton to prevent multiple invocations of acquireVsCodeApi.
-export const vscode = new VSCodeAPIWrapper();

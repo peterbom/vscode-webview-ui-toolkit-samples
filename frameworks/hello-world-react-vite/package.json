@@ -21,6 +21,10 @@
       {
         "command": "hello-world.showGame",
         "title": "Hello World: Show Game"
+      },
+      {
+        "command": "hello-world.showPeriscope",
+        "title": "Hello World: Show Periscope"
       }
     ]
   },
