@@ -34,6 +34,29 @@ export module GameContract {
   };
 }
 
+export module StyleTestContract {
+  export const viewInfo: ViewInfo = {
+    title: "Style Test",
+    contentId: "style"
+  };
+
+  export interface ReportCssVars extends Command<"reportCssVars"> {
+    cssVars: string[]
+  }
+
+  export interface ReportCssRules extends Command<"reportCssRules"> {
+    rules: CssRule[]
+  }
+
+  export interface CssRule {
+    selector: string,
+    text: string
+  }
+
+  export type ToVsCodeMessage = ReportCssVars | ReportCssRules;
+  export type ToWebViewMessage = never;
+}
+
 export module PeriscopeContract {
   export const viewInfo: ViewInfo = {
     title: "Periscope",

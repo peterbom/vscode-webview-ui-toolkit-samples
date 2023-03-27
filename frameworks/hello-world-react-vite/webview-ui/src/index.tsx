@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom";
+import './index.css';
+import './vars.css';
+import { StyleTest } from "./StyleTest/StyleTest";
 import { HelloWorld, getHelloWorldScenarios } from "./HelloWorld/HelloWorld";
-import { GameContract, HelloWorldContract, PeriscopeContract } from "../../src/contract/webviewContracts";
+import { GameContract, HelloWorldContract, PeriscopeContract, StyleTestContract } from "../../src/contract/webviewContracts";
 import { Game, getGameScenarios } from "./Game/Game";
 import { ContentSelector } from "./ContentSelector";
 import { Periscope, getPeriscopeScenarios } from "./Periscope/Periscope";
@@ -36,10 +39,11 @@ function getVsCodeContent(): JSX.Element | null {
 
   const vsCodeInitialState = JSON.parse(rootElem?.dataset.initialstate || "{}");
   switch (vscodeContentId) {
+    case StyleTestContract.viewInfo.contentId: return <StyleTest />
     case HelloWorldContract.viewInfo.contentId: return <HelloWorld {...vsCodeInitialState} />
     case GameContract.viewInfo.contentId: return <Game />
     case PeriscopeContract.viewInfo.contentId: return <Periscope {...vsCodeInitialState} />
-    default: throw new Error(`Unexpected content ID ${vscodeContentId}`);
+    default: throw new Error(`Unexpected content ID: '${vscodeContentId}'`);
   }
 }
 

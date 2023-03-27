@@ -3,7 +3,7 @@ import { GameDataProvider, GamePanel } from "./panels/GamePanel";
 import { HelloWorldDataProvider, HelloWorldPanel } from "./panels/HelloWorldPanel";
 import { PeriscopeDataProvider, PeriscopePanel } from "./panels/PeriscopePanel";
 
-export function activate(context: ExtensionContext) {
+export function activate(context: ExtensionContext): ExtensionContext {
   const helloWorldPanel = new HelloWorldPanel(context.extensionUri);
   const gamePanel = new GamePanel(context.extensionUri);
   const periscopePanel = new PeriscopePanel(context.extensionUri);
@@ -24,4 +24,6 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(showHelloWorldCommand);
   context.subscriptions.push(showGameCommand);
   context.subscriptions.push(showPeriscopeCommand);
+
+  return context;
 }

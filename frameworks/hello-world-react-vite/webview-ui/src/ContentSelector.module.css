@@ -14,13 +14,16 @@
   text-decoration: none;
   font-size: 1.2rem;
   display: block;
-  color: #444;
-  background-color: #eee;
 }
 
-.contentLink:hover, .contentLink.selected {
-  color: #222;
-  background-color: #ddd;
+.contentLink:hover {
+  background-color: var(--vscode-list-hoverBackground);
+  color: var(--vscode-list-hoverForeground);
+}
+
+.contentLink.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
 }
 
 .main {
